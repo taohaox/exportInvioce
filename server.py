@@ -73,6 +73,9 @@ def recognize_address():
             # 替换单引号为双引号，兼容AI输出
             result = result.replace("'", '"')
             info = json.loads(result)
+            # 如果所有字段都为空，提示不是有效地址
+            if not any([info.get('import_contact','').strip(), info.get('import_address','').strip(), info.get('import_phone','').strip(), info.get('import_zip','').strip()]):
+                return jsonify({'success': False, 'message': '未检测到有效的地址信息，请检查输入内容'})
             return jsonify({'success': True,
                             'import_contact': info.get('import_contact', ''),
                             'import_address': info.get('import_address', ''),
