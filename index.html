@@ -201,9 +201,10 @@
         </form>
     </div>
     <script>
-        // 自动适配后端服务器地址（同源）
+        // 后端服务器地址（生产环境）
+        const SERVER_URL = 'https://exportapi.gonyb.com';
         function getServerUrl() {
-            return window.location.origin;
+            return SERVER_URL;
         }
         // 自动计算总件数和总货值
         function updateTotalNoOfPackageAndValue() {
