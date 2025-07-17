@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>一键导出发票</title>
+    <style>
+        body {
+            font-family: '微软雅黑', Arial, sans-serif;
+            background: #f4f6fa;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 900px;
+            margin: 40px auto 0 auto;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+            padding: 32px 36px 24px 36px;
+        }
+        h2 {
+            margin-bottom: 18px;
+            text-align: center;
+            color: #2d3a4b;
+            letter-spacing: 2px;
+        }
+        .section {
+            margin-bottom: 28px;
+        }
+        .form-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 18px 24px;
+            margin-bottom: 12px;
+        }
+        .form-group {
+            flex: 1 1 220px;
+            min-width: 180px;
+            display: flex;
+            align-items: center;
+        }
+        label {
+            width: 90px;
+            color: #3a4a5d;
+            font-size: 15px;
+        }
+        input {
+            flex: 1;
+            padding: 6px 10px;
+            border: 1px solid #cfd8dc;
+            border-radius: 5px;
+            font-size: 15px;
+            background: #f8fafc;
+            transition: border 0.2s;
+        }
+        input:focus {
+            border: 1.5px solid #4f8cff;
+            outline: none;
+            background: #fff;
+        }
+        .required-star {
+            color: #e53935;
+            margin-left: 2px;
+            font-size: 16px;
+        }
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 10px;
+            background: #f8fafc;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .items-table th, .items-table td {
+            border: 1px solid #e0e6ed;
+            padding: 7px 6px;
+            text-align: center;
+            font-size: 15px;
+        }
+        .items-table th {
+            background: #e3eaf3;
+            color: #2d3a4b;
+        }
+        .item-row input {
+            width: 70px;
+            min-width: 50px;
+            margin: 0;
+            font-size: 14px;
+        }
+        .item-row .remove-btn {
+            background: #fff0f0;
+            color: #e53935;
+            border: 1px solid #e53935;
+            border-radius: 4px;
+            padding: 3px 10px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-left: 2px;
+            transition: background 0.2s, color 0.2s;
+        }
+        .item-row .remove-btn:hover {
+            background: #e53935;
+            color: #fff;
+        }
+        .add-btn, .export-btn {
+            background: linear-gradient(90deg, #4f8cff 0%, #6fc3ff 100%);
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            padding: 8px 22px;
+            font-size: 16px;
+            margin: 10px 0 0 0;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(79,140,255,0.08);
+            transition: background 0.2s;
+        }
+        .add-btn:hover, .export-btn:hover {
+            background: linear-gradient(90deg, #357ae8 0%, #4f8cff 100%);
+        }
+        @media (max-width: 800px) {
+            .container { padding: 18px 4vw; }
+            .form-row { flex-direction: column; gap: 8px; }
+            .form-group { min-width: 0; }
+            .items-table th, .items-table td { font-size: 13px; padding: 5px 2px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>发票信息填写</h2>
+        <form id="invoiceForm" onsubmit="return false;">
+            <div class="section" style="margin-bottom:22px;">
+                <textarea id="ai_address_input" rows="3" style="width:100%;font-size:16px;padding:10px 12px;border:1.5px solid #cfd8dc;border-radius:6px;resize:vertical;" placeholder="智能识别收货信息（如：张三 13800001111 北京市朝阳区XX路88号 100000）"></textarea>
+                <button type="button" id="ai_recognize_btn" class="add-btn" style="margin-top:8px;float:right;" onclick="recognizeAddress()">智能识别地址</button>
+                <div id="ai_recognize_msg" style="color:#e53935;font-size:14px;margin-top:4px;display:none;"></div>
+                <div style="clear:both;"></div>
+            </div>
+            <div class="section">
+                <div class="form-row">
+                    <div class="form-group"><label>运单号:</label><input name="waybill_no" value="6632948000"></div>
+                    <div class="form-group"><label>出口日期:</label><input name="date_of_exportation" id="date_of_exportation"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>公司名:</label><input name="company_name" value="Shenzhen HengMao Pack Co.,Ltd"></div>
+                    <div class="form-group"><label>收件联系人:</label><input name="import_contact" required><span class="required-star">*</span></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>收件电话:</label><input name="import_phone" required><span class="required-star">*</span></div>
+                    <div class="form-group"><label>邮编:</label><input name="import_zip" required><span class="required-star">*</span></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>收件地址:</label><input name="import_address" required><span class="required-star">*</span></div>
+                    
+                </div>
+            </div>
+            <div class="section">
+                <h3 style="margin-bottom: 10px;">商品明细（可多行）</h3>
+                <table class="items-table">
+                    <thead>
+                        <tr>
+                            <th>件数<span class="required-star">*</span></th>
+                            <th>描述</th>
+                            <th>材料</th>
+                            <th>用途</th>
+                            <th>数量<span class="required-star">*</span></th>
+                            <th>单价</th>
+                            <th>总价</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="items">
+                        <tr class="item-row">
+                            <td><input name="no_of_pack" required></td>
+                            <td><input name="description" value="Plasticbottle"></td>
+                            <td><input name="material" value="PP"></td>
+                            <td><input name="application" value="packing"></td>
+                            <td><input name="qty" required></td>
+                            <td><input name="unit_price" value="0.34"></td>
+                            <td><input name="total_price" value="0.34"></td>
+                            <td><button type="button" class="remove-btn" onclick="removeItem(this)">删除</button></td>
+                        </tr>
+                        <tr class="item-row">
+                            <td><input name="no_of_pack" required></td>
+                            <td><input name="description" value="Plasticbottle"></td>
+                            <td><input name="material" value="PP"></td>
+                            <td><input name="application" value="packing"></td>
+                            <td><input name="qty" required></td>
+                            <td><input name="unit_price" value="0.34"></td>
+                            <td><input name="total_price" value="0.34"></td>
+                            <td><button type="button" class="remove-btn" onclick="removeItem(this)">删除</button></td>
+                        </tr>
+                    </tbody>
+                </table>
+                <button type="button" class="add-btn" onclick="addItem()">添加商品行</button>
+            </div>
+            <div class="form-row" style="margin-top:18px;">
+                <div class="form-group"><label>总件数:</label><input name="total_no_of_package" id="total_no_of_package" value="1" readonly style="background:#f0f0f0;cursor:not-allowed;"></div>
+                <div class="form-group"><label>总货值:</label><input name="total_goods_value" id="total_goods_value" value="0.00" readonly style="background:#f0f0f0;cursor:not-allowed;"></div>
+            </div>
+            <button type="button" class="export-btn" onclick="exportInvoice()">一键导出</button>
+        </form>
+    </div>
+    <script>
+        // 自动适配后端服务器地址（同源）
+        function getServerUrl() {
+            return window.location.origin;
+        }
+        // 自动计算总件数和总货值
+        function updateTotalNoOfPackageAndValue() {
+            let sumPack = 0;
+            let sumValue = 0;
+            document.querySelectorAll('.item-row').forEach(tr => {
+                let pack = parseFloat(tr.querySelector('input[name="no_of_pack"]').value);
+                let qty = parseFloat(tr.querySelector('input[name="qty"]').value);
+                let price = parseFloat(tr.querySelector('input[name="unit_price"]').value);
+                // 商品总价 = 单价*数量
+                let total = '';
+                if (!isNaN(price) && !isNaN(qty)) {
+                    total = (price * qty).toFixed(2);
+                    tr.querySelector('input[name="total_price"]').value = total;
+                    sumValue += parseFloat(total);
+                } else {
+                    tr.querySelector('input[name="total_price"]').value = '';
+                }
+                if (!isNaN(pack)) sumPack += pack;
+            });
+            document.getElementById('total_no_of_package').value = sumPack || '';
+            document.getElementById('total_goods_value').value = sumValue.toFixed(2);
+        }
+        // 监听商品件数、数量、单价变化
+        function bindNoOfPackEvents() {
+            document.querySelectorAll('.item-row input[name="no_of_pack"], .item-row input[name="qty"], .item-row input[name="unit_price"]').forEach(input => {
+                input.removeEventListener('input', updateTotalNoOfPackageAndValue);
+                input.addEventListener('input', updateTotalNoOfPackageAndValue);
+            });
+        }
+        // 初始绑定
+        window.onload = function() {
+            var today = new Date();
+            var yyyy = today.getFullYear();
+            var mm = String(today.getMonth() + 1).padStart(2, '0');
+            var dd = String(today.getDate()).padStart(2, '0');
+            document.getElementById('date_of_exportation').value = yyyy + '-' + mm + '-' + dd;
+            bindNoOfPackEvents();
+            updateTotalNoOfPackageAndValue();
+        }
+        function addItem() {
+            const tr = document.createElement('tr');
+            tr.className = 'item-row';
+            tr.innerHTML = `
+                <td><input name="no_of_pack" required></td>
+                <td><input name="description" value="Plasticbottle"></td>
+                <td><input name="material" value="PP"></td>
+                <td><input name="application" value="packing"></td>
+                <td><input name="qty" required></td>
+                <td><input name="unit_price" value="0.34"></td>
+                <td><input name="total_price" value="0.34"></td>
+                <td><button type="button" class="remove-btn" onclick="removeItem(this)">删除</button></td>
+            `;
+            document.getElementById('items').appendChild(tr);
+            bindNoOfPackEvents();
+            updateTotalNoOfPackageAndValue();
+        }
+        function removeItem(btn) {
+            const items = document.getElementById('items');
+            if (items.children.length > 1) {
+                btn.closest('tr').remove();
+                bindNoOfPackEvents();
+                updateTotalNoOfPackageAndValue();
+            } else {
+                alert('至少保留一行商品明细');
+            }
+        }
+        function exportInvoice() {
+            // 校验主表单必填
+            const form = document.getElementById('invoiceForm');
+            const requiredFields = ['import_contact','import_address','import_phone','import_zip'];
+            for (let name of requiredFields) {
+                const input = form.querySelector(`[name="${name}"]`);
+                if (!input.value.trim()) {
+                    alert('请填写所有必填项！');
+                    input.focus();
+                    return;
+                }
+            }
+            // 校验商品明细必填
+            const itemRows = document.querySelectorAll('.item-row');
+            for (let tr of itemRows) {
+                const no_of_pack = tr.querySelector('[name="no_of_pack"]');
+                const qty = tr.querySelector('[name="qty"]');
+                if (!no_of_pack.value.trim() || !qty.value.trim()) {
+                    alert('请填写所有商品明细的必填项！');
+                    no_of_pack.focus();
+                    return;
+                }
+            }
+            // 组装数据
+            const formData = new FormData(form);
+            // 处理商品明细
+            const items = [];
+            for (let tr of itemRows) {
+                const item = {};
+                for (let input of tr.querySelectorAll('input')) {
+                    item[input.name] = input.value;
+                }
+                // 只要有一个字段填写就加入
+                if (Object.values(item).some(v => v.trim() !== '')) {
+                    items.push(item);
+                }
+            }
+            // 处理主表单
+            const data = {};
+            for (let [k, v] of formData.entries()) {
+                if (!['no_of_pack','description','material','application','qty','unit_price','total_price'].includes(k)) {
+                    data[k] = v;
+                }
+            }
+            // 总件数、总货值自动带入
+            data['total_no_of_package'] = document.getElementById('total_no_of_package').value;
+            data['total_goods_value'] = document.getElementById('total_goods_value').value;
+            data['items'] = items;
+            fetch(getServerUrl() + '/export_invoice', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            })
+            .then(response => {
+                if (!response.ok) throw new Error('导出失败');
+                return response.blob();
+            })
+            .then(blob => {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'invoice.docx';
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+            })
+            .catch(e => alert(e.message));
+        }
+        // 智能识别收货地址
+        function recognizeAddress() {
+            const btn = document.getElementById('ai_recognize_btn');
+            const msg = document.getElementById('ai_recognize_msg');
+            msg.style.display = 'none';
+            btn.disabled = true;
+            btn.textContent = '识别中...';
+            const text = document.getElementById('ai_address_input').value.trim();
+            if (!text) {
+                msg.textContent = '请输入收货信息文本';
+                msg.style.display = 'block';
+                btn.disabled = false;
+                btn.textContent = '智能识别地址';
+                return;
+            }
+            fetch(getServerUrl() + '/recognize_address', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({text})
+            })
+            .then(r => r.json())
+            .then(res => {
+                if (res.success) {
+                    if (res.import_contact) document.querySelector('[name="import_contact"]').value = res.import_contact;
+                    if (res.import_address) document.querySelector('[name="import_address"]').value = res.import_address;
+                    if (res.import_phone) document.querySelector('[name="import_phone"]').value = res.import_phone;
+                    if (res.import_zip) document.querySelector('[name="import_zip"]').value = res.import_zip;
+                    msg.textContent = '识别成功，已自动填写到表单';
+                    msg.style.color = '#43a047';
+                    msg.style.display = 'block';
+                } else {
+                    msg.textContent = res.message || '识别失败';
+                    msg.style.color = '#e53935';
+                    msg.style.display = 'block';
+                }
+            })
+            .catch(e => {
+                msg.textContent = '接口请求失败';
+                msg.style.color = '#e53935';
+                msg.style.display = 'block';
+            })
+            .finally(() => {
+                btn.disabled = false;
+                btn.textContent = '智能识别地址';
+            });
+        }
+    </script>
+</body>
+</html> 
