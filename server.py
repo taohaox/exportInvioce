@@ -8,7 +8,15 @@ from openai import OpenAI
 
 app = Flask(__name__)
 # 只允许 https://export.gonyb.com 跨域访问
-CORS(app, origins=["https://export.gonyb.com"], supports_credentials=True)
+# 配置CORS
+CORS(app, resources={
+    r"/*": {
+        "origins": ["https://export.gonyb.com","*"],
+        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization"]
+    },
+    
+})
 
 # AI客户端初始化（可根据demo_ai.py调整）
 client = OpenAI(
